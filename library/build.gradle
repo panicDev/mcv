@@ -1,0 +1,147 @@
+apply plugin: 'com.android.library'
+apply plugin: 'maven'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
+
+android {
+  compileSdkVersion rootProject.ext.compileSdkVersion
+
+  defaultConfig {
+    minSdkVersion rootProject.ext.minSdkVersion
+    targetSdkVersion rootProject.ext.targetSdkVersion
+
+    versionCode 1
+    versionName "1.0.0"
+  }
+
+  lintOptions {
+    abortOnError false
+  }
+
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+  }
+}
+
+group = "com.github.panicDev"
+version = android.defaultConfig.versionName
+archivesBaseName = 'material-calendarview'
+
+dependencies {
+  implementation "androidx.core:core:$core"
+  implementation "androidx.appcompat:appcompat:$appCompat"
+  implementation 'com.jakewharton.threetenabp:threetenabp:1.2.4'
+
+  testImplementation('org.threeten:threetenbp:1.4.4') {
+    // Use threetenBP library for tests as context will
+    // not be available to initialise threetenABP
+    exclude group: 'com.jakewharton.threetenabp', module: 'threetenabp'
+  }
+  rootProject.ext.testDep.each { testImplementation it }
+  rootProject.ext.androidTestDep.each { androidTestImplementation it }
+}
+
+ext {
+  // This should be same as you've created in bintray
+  bintrayRepo = 'android'
+
+  // Name which will be visible on bintray
+  bintrayName = 'material-calendarview'
+
+  // Library Details
+  publishedGroupId = 'com.github.panicDev'
+  libraryName = 'material-calendarview'
+  artifact = 'material-calendarview'
+  libraryDescription = 'A Material design back port of Android\'s CalendarView.'
+  libraryVersionCode = 1
+  libraryVersion = '1.0.0'
+
+  // Repository Link (For e.g. GitHub repo)
+  siteUrl = 'https://github.com/panicDev/material-calendarview'
+  gitUrl = 'https://github.com/panicDev/material-calendarview.git'
+  githubRepository= 'panicDev/material-calendarview'
+
+  // Developer Details
+  developerId = 'paniclabs'
+  developerName = 'Al Musthofa'
+  developerEmail = 'panic.inc.dev@gmail.com'
+
+  // License Details
+  licenseName = 'The Apache Software License, Version 2.0'
+  licenseUrl = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+  licenseId = ["Apache-2.0"]
+}
+
+group = publishedGroupId
+version = libraryVersion
+
+def webUrl = project.findProperty("siteUrl") ?: ''
+def libDescription = project.findProperty("libraryDescription") ?: ''
+
+install {
+  repositories.mavenInstaller {
+    pom.project {
+      packaging 'aar'
+      groupId publishedGroupId
+      artifactId artifact
+
+      name artifact
+      description libDescription
+      url webUrl
+
+      licenses {
+        license {
+          name licenseName
+          url licenseUrl
+        }
+      }
+      developers {
+        developer {
+          name developerName
+          email developerEmail
+        }
+      }
+      scm {
+        connection gitUrl
+        developerConnection gitUrl
+        url webUrl
+      }
+    }
+  }
+}
+
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from android.sourceSets.main.java.srcDirs
+}
+
+artifacts {
+  archives sourcesJar
+}
+
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+bintray {
+  user = properties.getProperty("bintray.user")
+  key = properties.getProperty("bintray.apikey")
+
+  configurations = ['archives']
+  pkg {
+    repo = bintrayRepo
+    name = bintrayName
+    userOrg = project.findProperty("organization") ?: user
+    desc = libDescription
+    websiteUrl = webUrl
+    vcsUrl = gitUrl
+    licenses = [licenseId]
+    dryRun = false
+    publish = true
+    override = project.findProperty("overrideExisting") ?: false
+    publicDownloadNumbers = true
+    version {
+      desc = libDescription
+    }
+  }
+}
